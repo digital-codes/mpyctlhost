@@ -26,6 +26,8 @@ def encode_ctl(data):
     # b: unsigned char
     return struct.pack("b", data)
 
+DEVICE_CONFIG_RD = "19e2282a-0777-4519-9d08-9bc983c3a7d0"
+DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 
 
 async def main(address):
@@ -68,8 +70,17 @@ async def main(address):
             print("mfg val:",mfcVal)
             mdlVal = await client.read_gatt_char("00002a24-0000-1000-8000-00805f9b34fb")
             print("mdl val:",mdlVal)
-            snoVal = await client.read_gatt_char("00002a25-0000-1000-8000-00805f9b34fb")
-            print("sno val:",snoVal)
+
+            # config and pairing
+            try:
+                cfgVal = await client.read_gatt_char(DEVICE_CONFIG_RD)
+                print("cfg val:",cfgVal)
+                pairVal = await client.read_gatt_char(DEVICE_PAIR)
+                print("pair val:",pairVal)
+                await client.write_gatt_char(DEVICE_PAIR,bytearray([1,2,3,3,2,1]))
+            except:
+                print("config and pair failed")
+
 
             tmp = env.get_characteristic("00002a6e-0000-1000-8000-00805f9b34fb")
             print("rate char:",tmp,"\n-  ",tmp.description)
