@@ -29,11 +29,14 @@ def encode_ctl(data):
 DEVICE_CONFIG_RD = "19e2282a-0777-4519-9d08-9bc983c3a7d0"
 DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 
+#await asyncio.BleakClient(address).disconnect()
 
 async def main(address):
+    await BleakClient(address).disconnect()
+    time.sleep(1)
     async with BleakClient(address) as client:
         if client.is_connected:
-            await client.pair()
+            #await client.pair()
             services = client.services
             print("Services:",services)
             for s in services:

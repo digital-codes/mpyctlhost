@@ -2,6 +2,8 @@
 import sqlite3
 from sqlite3 import Error
 import os
+import json
+import sys
 
 # defs
 # Device name
@@ -14,6 +16,7 @@ _db_name = 'devices.db'
 _database = os.sep.join(_db_dir.split("/") + [_db_name])
 print("DB:",_database)
 
+#cmd = "mpremote run /home/kugel/temp/m5/mpyctl/src/demos/devConfig.py > .cfg.json"
 
 class DatabaseManager:
     def __init__(self, db_file):
@@ -54,6 +57,42 @@ class DatabaseManager:
                             name TEXT NOT NULL,
                             address TEXT NOT NULL,
                             config TEXT NOT NULL)''')
+        except Error as e:
+            print(e)
+
+    def insert_config(self, config_file):
+        """
+        Insert a new row into the 'devices' table from a config file
+
+        Args:
+            config_file (str): Name of the config file
+
+        Returns:
+            row_id (int): The ID of the inserted row.
+        """
+        try:
+            with open(config_file) as f:
+                config = json.load(f)
+            address = config["ble"]["addr"].lower()
+            # 1) check if device exists
+            # 2) check if device is set
+            # 3) check if model is set
+            items = self.get_by_address(address)
+            if len(items) > 0:
+                print(f"Exists:{items[0]}")
+                return
+            if config["device"] == -1:
+                config["device"] = self.get_latest_id() + 1
+            if config["model"] == "":
+                config["model"] = _devName
+            name = "_".join([config["model"],f"{(config['device']):04}"])
+            
+            sql = ''' INSERT INTO devices(config, address, name)
+                        VALUES(?,?,?) '''
+            cur = self.conn.cursor()
+            cur.execute(sql, (json.dumps(config), address, name))
+            self.conn.commit()
+            return cur.lastrowid
         except Error as e:
             print(e)
 
@@ -114,6 +153,25 @@ class DatabaseManager:
         except Error as e:
             print(e)
 
+    def get_by_address(self, addr):
+        """
+        Get rows from the 'devices' table by address.
+
+        Args:
+            addr (str): The name to search for.
+
+        Returns:
+            rows (list): A list of rows matching the name.
+        """
+        try:
+            sql = ''' SELECT * FROM devices WHERE address = ?'''
+            cur = self.conn.cursor()
+            cur.execute(sql, (addr,))
+            rows = cur.fetchall()
+            return rows
+        except Error as e:
+            print(e)
+
     def get_by_id(self, id):
         """
         Get rows from the 'devices' table by ID.
@@ -139,28 +197,35 @@ class DatabaseManager:
         """
         self.conn.close()
 
+    @staticmethod
+    def initialize(db_dir,db_file):
+        """
+        Create and initialize new database
+        Args:
+            db_dir (str): base directory of database
+            db_file (str): database file name
+        """
+        # Create a database connection
+        dbm = DatabaseManager(os.sep.join([db_dir,db_file]))
+        # Create table
+        dbm.create_tables()
+    
+
+
 def main():
     # Create a database connection
     dbm = DatabaseManager(_database)
 
-    # Create table
-    dbm.create_tables()
+    latest = dbm.get_latest_id()
+    print("Latest: ",latest)
 
-    # Insert a new row with JSON string and MAC address
-    data = '{"name": "Alice", "age": 28, "city": "Los Angeles"}'
-    address = "00:1B:3C:4D:5E:6F"
-
-    latest_id = dbm.get_latest_id()
-    if latest_id == None:
-        latest_id = 0
-    print("Latest:",latest_id)
-
-    name = "_".join([_devName,f"{(latest_id + 1):04}"])
-    row_id = dbm.insert_row(data, address,name)
-
-    # Retrieve the ID of the latest row
-    latest_id = dbm.get_latest_id()
-    print("New:",latest_id)
+    if len(sys.argv) > 1 :
+        # assume param is configfile
+        dbm.insert_config(sys.argv[1])
+    else:
+        for i in range(1,latest + 1):
+            item = dbm.get_by_id(i)
+            print(item)
 
     # Close connection
     dbm.close()
