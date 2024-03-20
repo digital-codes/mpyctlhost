@@ -4,6 +4,8 @@ from sqlite3 import Error
 import os
 import json
 import sys
+import secrets
+import random
 
 # defs
 # Device name
@@ -41,6 +43,7 @@ class DatabaseManager:
         conn = None
         try:
             conn = sqlite3.connect(db_file)
+            conn.row_factory = sqlite3.Row  # Return rows as dictionaries
             return conn
         except Error as e:
             print(e)
@@ -79,12 +82,16 @@ class DatabaseManager:
             # 3) check if model is set
             items = self.get_by_address(address)
             if len(items) > 0:
-                print(f"Exists:{items[0]}")
-                return
+                existingId = items[0]['id']
+                raise BaseException(f"Existing id: {existingId}")
             if config["device"] == -1:
                 config["device"] = self.get_latest_id() + 1
             if config["model"] == "":
                 config["model"] = _devName
+            if (config["ble"]["pin"] == 0) or (config["ble"]["key"] == ""):
+                key,pin = DatabaseManager.genSecrets()
+                config["ble"]["pin"] = pin
+                config["ble"]["key"] = key
             name = "_".join([config["model"],f"{(config['device']):04}"])
             
             sql = ''' INSERT INTO devices(config, address, name)
@@ -92,9 +99,44 @@ class DatabaseManager:
             cur = self.conn.cursor()
             cur.execute(sql, (json.dumps(config), address, name))
             self.conn.commit()
+            with open(config_file,"w") as f:
+                json.dump(config,f)
+            print(f"Updated: {config_file}")
             return cur.lastrowid
         except Error as e:
-            print(e)
+            print(f"Insert failed: {e}")
+            #return raise BaseException()
+
+    def update_config(self, config_file):
+        """
+        update a device from a config file
+
+        Args:
+            config_file (str): Name of the config file
+
+        Returns:
+            row_id (int): The ID of the updated row.
+        """
+        try:
+            with open(config_file) as f:
+                config = json.load(f)
+            address = config["ble"]["addr"].lower()
+            # 1) check if device exists
+            # 2) check if device is set
+            # 3) check if model is set
+            items = self.get_by_address(address)
+            if len(items) == 0:
+                raise BaseException(f"Address {address} doesn't exist")
+            item = items[0]
+            itemId = item["id"]
+            sql = ''' UPDATE devices set config = ?
+                      where id = ? '''
+            cur = self.conn.cursor()
+            cur.execute(sql, (json.dumps(config), itemId))
+            self.conn.commit()
+            return itemId
+        except Error as e:
+            raise BaseException(f"Update failed: {e}")
 
     def insert_row(self, json_string, mac_address, dev_name):
         """
@@ -149,7 +191,10 @@ class DatabaseManager:
             cur = self.conn.cursor()
             cur.execute(sql, (name,))
             rows = cur.fetchall()
-            return rows
+            results = []
+            for row in rows:
+                results.append(dict(row))            
+            return results
         except Error as e:
             print(e)
 
@@ -168,7 +213,10 @@ class DatabaseManager:
             cur = self.conn.cursor()
             cur.execute(sql, (addr,))
             rows = cur.fetchall()
-            return rows
+            results = []
+            for row in rows:
+                results.append(dict(row))            
+            return results
         except Error as e:
             print(e)
 
@@ -209,6 +257,12 @@ class DatabaseManager:
         dbm = DatabaseManager(os.sep.join([db_dir,db_file]))
         # Create table
         dbm.create_tables()
+
+    @staticmethod
+    def genSecrets():
+        key=secrets.token_bytes(16)
+        pin = random.randint(100000,999999)
+        return key.hex(),pin
     
 
 
@@ -221,7 +275,8 @@ def main():
 
     if len(sys.argv) > 1 :
         # assume param is configfile
-        dbm.insert_config(sys.argv[1])
+        id = dbm.insert_config(sys.argv[1])
+        latest = dbm.get_latest_id()
     else:
         for i in range(1,latest + 1):
             item = dbm.get_by_id(i)
