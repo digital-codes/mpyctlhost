@@ -92,6 +92,10 @@ class DatabaseManager:
                 key,pin = DatabaseManager.genSecrets()
                 config["ble"]["pin"] = pin
                 config["ble"]["key"] = key
+            if config["wlan"].get("ssid") == None:
+                config["wlan"]["ssid"] = "karlsruhe.freifunk.net"
+            if config["wlan"].get("key") == None:
+                config["wlan"]["key"] = ""
             name = "_".join([config["model"],f"{(config['device']):04}"])
             
             sql = ''' INSERT INTO devices(config, address, name)

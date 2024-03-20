@@ -35,12 +35,22 @@ print("Latest: ",latest)
 cmd = f"mpremote run mpyGetConfig.py > {_cfg_file}"
 if os.system(cmd) != 0:
     print("Read failed")
+    # Close connection
+    dbm.close()
     sys.exit()
 
 dbm.insert_config(_cfg_file)
 newest = dbm.get_latest_id()
 print("Newest: ",newest)
-    
+
+# update device with config
+cmd = f"mpremote cp {_cfg_file} :config.json"
+if os.system(cmd) != 0:
+    print("Write to device failed")
+    # Close connection
+    dbm.close()
+    sys.exit()
+
 
 # Close connection
 dbm.close()
