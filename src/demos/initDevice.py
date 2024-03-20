@@ -16,7 +16,6 @@ _devName = "MpyCtl"
 #_db_dir = "/home/kugel/daten/work/database/mpyctl"
 _db_dir = "."
 _db_name = 'devices.db'
-_database = os.sep.join(_db_dir.split("/") + [_db_name])
 _cfg_file = ".cfg.json"
 
 if len(sys.argv) > 1 :
