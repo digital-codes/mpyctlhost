@@ -9,12 +9,9 @@ import sys
 from devDb import DatabaseManager
 
 # defs
-# Device name
-_devName = "MpyCtl"
 
 # Database file
 #_db_dir = "/home/kugel/daten/work/database/mpyctl"
-_db_dir = "."
 _db_name = 'devices.db'
 _cfg_file = ".cfg.json"
 

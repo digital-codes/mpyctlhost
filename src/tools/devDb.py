@@ -15,8 +15,6 @@ _devName = "MpyCtl"
 #_db_dir = "/home/kugel/daten/work/database/mpyctl"
 _db_dir = "."
 _db_name = 'devices.db'
-_database = os.sep.join(_db_dir.split("/") + [_db_name])
-print("DB:",_database)
 
 #cmd = "mpremote run /home/kugel/temp/m5/mpyctl/src/demos/devConfig.py > .cfg.json"
 
@@ -272,6 +270,8 @@ class DatabaseManager:
 
 def main():
     # Create a database connection
+    _database = os.sep.join(_db_dir.split("/") + [_db_name])
+    print("DB:",_database)
     dbm = DatabaseManager(_database)
 
     latest = dbm.get_latest_id()

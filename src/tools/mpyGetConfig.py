@@ -17,14 +17,15 @@ class Config:
         b.active(1)
         bmac = b.config("mac")[1].hex()
         w = network.WLAN()
+        # allways set os
+        o = os.uname()
+        self.os = {"release": o.release, "machine": o.machine}
         if data == None:    
             self.io = {}  # no default io definition
             self.device = -1  # no default device
             self.model = ""  # no default model
             self.setting = -1  # no default settings
             self.id = machine.unique_id().hex()
-            o = os.uname()
-            self.os = {"release": o.release, "machine": o.machine}
             bmac = b.config("mac")[1].hex()
             self.ble = {"key": "", "pin":0, "addr": bmac}
             self.wlan = {"addr": w.config("mac").hex()}
@@ -35,13 +36,11 @@ class Config:
             if data.get('id', "") == machine.unique_id().hex():
                 self.dirty = False
                 self.id = data.get('id')
-                self.os = data.get('os')
                 self.ble = data.get('ble')
                 self.wlan = data.get('wlan')
                 self.setting = data.get('setting')
             else:
                 self.id = machine.unique_id().hex()
-                self.os = {"release": os.uname().release, "machine": os.uname().machine}
                 self.ble = {"key": "", "pin":0, "addr": bmac}
                 self.wlan = {"addr": w.config("mac").hex()}
                 self.setting = -1

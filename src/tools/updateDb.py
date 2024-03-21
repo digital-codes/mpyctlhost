@@ -2,17 +2,13 @@
 import sqlite3
 from sqlite3 import Error
 import os
-import json
-import sys
 import sys
 
 from devDb import DatabaseManager
 
 # Database file
 #_db_dir = "/home/kugel/daten/work/database/mpyctl"
-_db_dir = "."
 _db_name = 'devices.db'
-_database = os.sep.join(_db_dir.split("/") + [_db_name])
 _cfg_file = ".cfg.json"
 
 if len(sys.argv) > 1 :
