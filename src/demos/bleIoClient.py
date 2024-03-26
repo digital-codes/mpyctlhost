@@ -2,6 +2,7 @@
 import asyncio
 from bleak import BleakClient
 from bleak import BleakScanner
+from bleak import BLEDevice
 import struct
 import time
 import random
@@ -41,38 +42,31 @@ _msgBytes = 4
 _ivBase = bytearray([0]*(16 - _msgBytes)) # first 3/4 iv
 _cryptMode = AES.MODE_CBC  # CBC
 
-devKey = None
 # find key for device
 def find_key(dev):
-    global devKey
-    item = devList.get(dev)
-    devKey = bytes.fromhex(item.key)
+    key = None
+    for d in devList:
+        print(d["config"]["ble"])
+        if d["name"] == dev:
+            key = bytes.fromhex(d["config"]["ble"]["key"])
+            break
+    return key
 
-
-def encrypt(msg):
-    global devKey
+def encrypt(msg,key):
+    payload = None
     try:
         ivPart = bytearray([random.randint(0, 255) for i in range(4)])  # Note the range is 0-255 for valid byte values
         # Combine and convert to bytes
         iv = bytes(_ivBase + ivPart)
-        print("iv",iv.hex())
         # Initialize AES cipher
-        fwd = AES.new(devKey, _cryptMode, iv)
-        digest = fwd.encrypt(pkcs7_padding(msg))
+        fwd = AES.new(key, _cryptMode, iv)
+        pmsg = bytes(pkcs7_padding(msg))
+        digest = fwd.encrypt(pmsg)
         payload = digest + ivPart
         return payload
     except:
         print("Crypt error")
         raise BaseException("Invalid Config")        
-
-
-# test
-devKey = bytes([1]*16)
-m = bytes([1,10,100,0])
-p = encrypt(m)
-print("p:",p.hex())
-
-#sys.exit()
 
 
 
@@ -94,12 +88,21 @@ DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 
 #await asyncio.BleakClient(address).disconnect()
 
-async def findDevs():
-    devName = "MpyCtl"
-    print(f"Scanning for {devName}")
-    devs = await BleakScanner.find_device_by_name(devName)
-    return devs
+async def findDevs(name):
+    print(f"Scanning for {name}")
+    dev = await BleakScanner.find_device_by_name(name)
+    #device = await BleakScanner.find_device_by_filter(devFilter)
+    return dev.address
 
+name = devList[0]["name"]
+
+dev = asyncio.run(findDevs(name))
+print("device:",dev)
+key = find_key(name)
+print("key:",key)
+
+
+#sys.exit()
 
 async def main(address):
     await BleakClient(address).disconnect()
@@ -152,7 +155,13 @@ async def main(address):
                 print("cfg val:",cfgVal)
                 pairVal = await client.read_gatt_char(DEVICE_PAIR)
                 print("pair val:",pairVal)
-                await client.write_gatt_char(DEVICE_PAIR,bytearray([1,2,3,3,2,1]))
+                # encrypt
+                key = find_key(name)
+                if key == None:
+                    raise BaseException("No Key")
+                msg = encrypt(pairVal,key)
+                await client.write_gatt_char(DEVICE_PAIR,msg)
+                time.sleep(.1)
             except:
                 print("config and pair failed")
 
@@ -185,5 +194,5 @@ async def main(address):
 
             
 
-asyncio.run(main(address))
+asyncio.run(main(dev))
 

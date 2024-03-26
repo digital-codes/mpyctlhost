@@ -12,8 +12,8 @@ import random
 _devName = "MpyCtl"
 
 # Database file
-#_db_dir = "/home/kugel/daten/work/database/mpyctl"
-_db_dir = "."
+_db_dir = "/home/kugel/daten/work/database/mpyctl"
+#_db_dir = "."
 _db_name = 'devices.db'
 
 #cmd = "mpremote run /home/kugel/temp/m5/mpyctl/src/demos/devConfig.py > .cfg.json"
@@ -284,7 +284,10 @@ def main():
     else:
         for i in range(1,latest + 1):
             item = dbm.get_by_id(i)
-            print(item)
+            if item:
+                item = dict(item[0])
+                item["config"] = json.loads(item["config"])
+                print(item)
 
     # Close connection
     dbm.close()
