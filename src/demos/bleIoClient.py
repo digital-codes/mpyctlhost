@@ -1,6 +1,7 @@
 
 import asyncio
 from bleak import BleakClient
+from bleak import BleakScanner
 import struct
 import time
 import random
@@ -92,6 +93,13 @@ DEVICE_CONFIG_RD = "19e2282a-0777-4519-9d08-9bc983c3a7d0"
 DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 
 #await asyncio.BleakClient(address).disconnect()
+
+async def findDevs():
+    devName = "MpyCtl"
+    print(f"Scanning for {devName}")
+    devs = await BleakScanner.find_device_by_name(devName)
+    return devs
+
 
 async def main(address):
     await BleakClient(address).disconnect()
