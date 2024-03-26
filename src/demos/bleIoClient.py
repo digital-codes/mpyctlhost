@@ -4,6 +4,9 @@ from bleak import BleakClient
 import struct
 import time
 import random
+import json
+import sys
+from Crypto.Cipher import AES
 
 address = "94:b9:7e:92:b6:d2" # matrix 1
 address = "AC:0B:FB:6F:40:B2" # stamp normal
@@ -14,6 +17,65 @@ address = "D8:A0:1D:5C:89:66" # lite
 address = "DC:54:75:C8:96:06" # S3
 
 # need to run ble1 at least once bofore using this ...
+
+# pairing stuff
+# load devices
+devList = []
+try:
+    with open("devices.json") as f:
+        devList = json.load(f)
+except:
+    print("Device list error")
+    #sys.exit()
+
+print(f"Devices: {devList}")
+
+def pkcs7_padding(data, block_size=16):
+    padding_required = block_size - (len(data) % block_size)
+    padding = bytes([padding_required] * padding_required)
+    return data + padding
+
+_mtu = 20
+_msgBytes = 4
+_ivBase = bytearray([0]*(16 - _msgBytes)) # first 3/4 iv
+_cryptMode = AES.MODE_CBC  # CBC
+
+devKey = None
+# find key for device
+def find_key(dev):
+    global devKey
+    item = devList.get(dev)
+    devKey = bytes.fromhex(item.key)
+
+
+def encrypt(msg):
+    global devKey
+    try:
+        ivPart = bytearray([random.randint(0, 255) for i in range(4)])  # Note the range is 0-255 for valid byte values
+        # Combine and convert to bytes
+        iv = bytes(_ivBase + ivPart)
+        print("iv",iv.hex())
+        # Initialize AES cipher
+        fwd = AES.new(devKey, _cryptMode, iv)
+        digest = fwd.encrypt(pkcs7_padding(msg))
+        payload = digest + ivPart
+        return payload
+    except:
+        print("Crypt error")
+        raise BaseException("Invalid Config")        
+
+
+# test
+devKey = bytes([1]*16)
+m = bytes([1,10,100,0])
+p = encrypt(m)
+print("p:",p.hex())
+
+#sys.exit()
+
+
+
+################
 
 def callback(sender, data):
     print(f"{sender}: {data}")
@@ -37,6 +99,8 @@ async def main(address):
     async with BleakClient(address) as client:
         if client.is_connected:
             #await client.pair()
+            # get read from devicelist
+            #
             services = client.services
             print("Services:",services)
             for s in services:
