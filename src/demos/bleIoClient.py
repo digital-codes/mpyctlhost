@@ -10,13 +10,6 @@ import json
 import sys
 from Crypto.Cipher import AES
 
-address = "94:b9:7e:92:b6:d2" # matrix 1
-address = "AC:0B:FB:6F:40:B2" # stamp normal
-address = "60:55:F9:57:B1:C2" # stamp c3u
-address = "64:E8:33:00:7C:16" # xiao c3
-address = "DC:54:75:CE:A3:F6" # stamp s3
-address = "D8:A0:1D:5C:89:66" # lite
-address = "DC:54:75:C8:96:06" # S3
 
 # need to run ble1 at least once bofore using this ...
 
@@ -33,7 +26,8 @@ except:
 print(f"Devices: {devList}")
 
 def pkcs7_padding(data, block_size=16):
-    padding_required = block_size - (len(data) % block_size)
+    rem = len(data) % block_size
+    padding_required = block_size - rem
     padding = bytes([padding_required] * padding_required)
     return data + padding
 
@@ -46,7 +40,7 @@ _cryptMode = AES.MODE_CBC  # CBC
 def find_key(dev):
     key = None
     for d in devList:
-        print(d["config"]["ble"])
+        print("Checking:",d["config"]["ble"])
         if d["name"] == dev:
             key = bytes.fromhex(d["config"]["ble"]["key"])
             break
@@ -88,13 +82,23 @@ DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 
 #await asyncio.BleakClient(address).disconnect()
 
+async def discoverDevices():
+    return await BleakScanner.discover()
+
+bleDevs = asyncio.run(discoverDevices())
+print("BLE devs:",bleDevs)
+for i,b in enumerate(bleDevs):
+    if "MpyCtl" in b.name:
+        print(i,b.name)
+
+idx = int(input("Enter index of device: "))
+name = bleDevs[idx].name
+
 async def findDevs(name):
     print(f"Scanning for {name}")
     dev = await BleakScanner.find_device_by_name(name)
     #device = await BleakScanner.find_device_by_filter(devFilter)
     return dev.address
-
-name = devList[0]["name"]
 
 dev = asyncio.run(findDevs(name))
 print("device:",dev)
@@ -106,7 +110,7 @@ print("key:",key)
 
 async def main(address):
     await BleakClient(address).disconnect()
-    time.sleep(1)
+    time.sleep(.3)
     async with BleakClient(address) as client:
         if client.is_connected:
             #await client.pair()

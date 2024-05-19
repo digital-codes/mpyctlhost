@@ -16,8 +16,8 @@ _db_name = 'devices.db'
 _cfg_file = ".cfg.json"
 
 if len(sys.argv) > 1 :
-    # assume param is path to database
-    _database = os.sep.join(sys.argv[1].split("/") + [_db_name])
+    # assume param is databasefile
+    _database = sys.argv[1]
 else:
     _database = os.sep.join([".",_db_name])
 
