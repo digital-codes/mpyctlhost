@@ -83,13 +83,19 @@ DEVICE_PAIR = "bda7b898-782a-4a50-8d10-79d897ea82c2"
 #await asyncio.BleakClient(address).disconnect()
 
 async def discoverDevices():
-    return await BleakScanner.discover()
+    return await BleakScanner.discover(timeout = 5.0)
 
 bleDevs = asyncio.run(discoverDevices())
 print("BLE devs:",bleDevs)
 for i,b in enumerate(bleDevs):
-    if "MpyCtl" in b.name:
-        print(i,b.name)
+    if b.name != None:
+        name = b.name
+    elif b.details != None:
+        name = b.details
+    else:
+        name = "Unknown"
+    if "MpyCtl" in name:
+        print(i,name)
 
 idx = int(input("Enter index of device: "))
 name = bleDevs[idx].name
@@ -108,6 +114,8 @@ print("key:",key)
 
 #sys.exit()
 
+check_services = True
+
 async def main(address):
     await BleakClient(address).disconnect()
     time.sleep(.3)
@@ -116,42 +124,43 @@ async def main(address):
             #await client.pair()
             # get read from devicelist
             #
-            services = client.services
-            print("Services:",services)
-            for s in services:
-                print("\n",s)
-                chars = s.characteristics
+            if check_services:
+                services = client.services
+                print("Services:",services)
+                for s in services:
+                    print("\n",s)
+                    chars = s.characteristics
+                    print("characters:",chars)
+                    for c in chars:
+                        print(c)
+
+                env = services.get_service("0000181a-0000-1000-8000-00805f9b34fb")
+                print("\n\nhr:",env)
+                chars = env.characteristics
                 print("characters:",chars)
                 for c in chars:
-                    print(c)
+                    print("\nchar:",c)
 
-            env = services.get_service("0000181a-0000-1000-8000-00805f9b34fb")
-            print("\n\nhr:",env)
-            chars = env.characteristics
-            print("characters:",chars)
-            for c in chars:
-                print("\nchar:",c)
+                ctl = services.get_service("00001815-0000-1000-8000-00805f9b34fb")
+                print("\n\nctl:",ctl)
+                chars = ctl.characteristics
+                print("characters:",chars)
+                for c in chars:
+                    print("\nchar:",c)
 
-            ctl = services.get_service("00001815-0000-1000-8000-00805f9b34fb")
-            print("\n\nctl:",ctl)
-            chars = ctl.characteristics
-            print("characters:",chars)
-            for c in chars:
-                print("\nchar:",c)
+                info = services.get_service("0000180a-0000-1000-8000-00805f9b34fb")
+                print("\n\ninfo:",info)
+                chars = info.characteristics
+                print("characters:",chars)
+                for c in chars:
+                    print("\nchar:",c)
 
-            info = services.get_service("0000180a-0000-1000-8000-00805f9b34fb")
-            print("\n\ninfo:",info)
-            chars = info.characteristics
-            print("characters:",chars)
-            for c in chars:
-                print("\nchar:",c)
-
-            mfc = info.get_characteristic("00002a29-0000-1000-8000-00805f9b34fb")
-            print("mfg char:",mfc,"\n-  ",mfc.description)
-            mfcVal = await client.read_gatt_char("00002a29-0000-1000-8000-00805f9b34fb")
-            print("mfg val:",mfcVal)
-            mdlVal = await client.read_gatt_char("00002a24-0000-1000-8000-00805f9b34fb")
-            print("mdl val:",mdlVal)
+                mfc = info.get_characteristic("00002a29-0000-1000-8000-00805f9b34fb")
+                print("mfg char:",mfc,"\n-  ",mfc.description)
+                mfcVal = await client.read_gatt_char("00002a29-0000-1000-8000-00805f9b34fb")
+                print("mfg val:",mfcVal)
+                mdlVal = await client.read_gatt_char("00002a24-0000-1000-8000-00805f9b34fb")
+                print("mdl val:",mdlVal)
 
             # config and pairing
             try:
@@ -160,14 +169,13 @@ async def main(address):
                 pairVal = await client.read_gatt_char(DEVICE_PAIR)
                 print("pair val:",pairVal)
                 # encrypt
-                key = find_key(name)
-                if key == None:
-                    raise BaseException("No Key")
+                # we have the key already from device selection
                 msg = encrypt(pairVal,key)
                 await client.write_gatt_char(DEVICE_PAIR,msg)
                 time.sleep(.1)
             except:
                 print("config and pair failed")
+                raise BaseException("Pair failed")
 
 
             tmp = env.get_characteristic("00002a6e-0000-1000-8000-00805f9b34fb")
