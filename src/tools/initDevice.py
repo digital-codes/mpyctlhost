@@ -21,6 +21,14 @@ if len(sys.argv) > 1 :
 else:
     _database = os.sep.join([".",_db_name])
 
+if len(sys.argv) > 2 :
+    # assume param is port specs
+    _port = sys.argv[2]
+else:
+    _port = ""
+
+
+
 # Create a database connection
 dbm = DatabaseManager(_database)
 
@@ -28,7 +36,7 @@ latest = dbm.get_latest_id()
 print("Latest: ",latest)
 
 # read base config
-cmd = f"mpremote run mpyGetConfig.py > {_cfg_file}"
+cmd = f"mpremote {_port} sleep .5 run mpyGetConfig.py > {_cfg_file}"
 if os.system(cmd) != 0:
     print("Read failed")
     # Close connection
@@ -40,7 +48,7 @@ newest = dbm.get_latest_id()
 print("Newest: ",newest)
 
 # update device with config
-cmd = f"mpremote cp {_cfg_file} :config.json"
+cmd = f"mpremote {_port} sleep .5 cp {_cfg_file} :config.json"
 if os.system(cmd) != 0:
     print("Write to device failed")
     # Close connection

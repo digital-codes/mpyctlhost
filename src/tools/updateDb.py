@@ -22,11 +22,19 @@ if len(sys.argv) > 1 :
     else:
         _database = os.sep.join(_db_dir.split("/") + [_db_name])
 
+if len(sys.argv) > 2 :
+    # assume param is port specs
+    _port = sys.argv[2]
+else:
+    _port = ""
+
+
+
 # Create a database connection
 dbm = DatabaseManager(_database)
 
 # read base config
-cmd = f"mpremote run mpyGetConfig.py > {_cfg_file}"
+cmd = f"mpremote {_port} sleep .5 run mpyGetConfig.py > {_cfg_file}"
 if os.system(cmd) != 0:
     print("Read failed")
     sys.exit()
