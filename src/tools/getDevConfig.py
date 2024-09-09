@@ -56,10 +56,10 @@ def main():
     item = dbm.get_by_id(_id)
     if item:
         item = dict(item[0])
-        item["config"] = json.loads(item["config"])
-        print(json.dumps(item))
+        config = json.loads(item["config"])
+        print(json.dumps(config))
         with open(_cfg_file, "w") as cfg:
-            json.dump(item,cfg)
+            json.dump(config,cfg)
     else:    
         print(f"Item with id {_id} not found")
     # Close connection
