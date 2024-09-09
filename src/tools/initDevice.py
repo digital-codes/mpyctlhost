@@ -4,9 +4,11 @@ from sqlite3 import Error
 import os
 import json
 import sys
-import sys
+import getopt
 
 from devDb import DatabaseManager
+
+from typeConfig import TypeConfig
 
 # defs
 
@@ -15,19 +17,48 @@ from devDb import DatabaseManager
 _db_name = 'devices.db'
 _cfg_file = ".cfg.json"
 
-if len(sys.argv) > 1 :
-    # assume param is databasefile
-    _database = sys.argv[1]
-else:
-    _database = os.sep.join([".",_db_name])
+cmdOpts = "hd:p:t:"
+_type = None
+_database = _database = os.sep.join([".",_db_name])
+_port = "u0"
 
-if len(sys.argv) > 2 :
-    # assume param is port specs
-    _port = sys.argv[2]
-else:
-    _port = ""
+def usage() :
+    print("Usage: initDevice.py <database> <port>")
 
+def getOptions():
+    global _database, _port, _type
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], cmdOpts, [])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err)  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
+    for o, a in opts:
+        if o == "-h":
+            usage()
+            sys.exit()
+        elif o == "-d":
+            _database = a
+        elif o == "-p":
+            _port = a
+        elif o == "-t":
+            _type = a
+        else:
+            assert False, "unhandled option"
+
+getOptions() 
+
+print(
+    "Database: ",_database,
+    "Port: ",_port,
+    "Type: ",_type
+    )
+
+if _type is None:
+    print("No type specified")
+    sys.exit()
 
 # Create a database connection
 dbm = DatabaseManager(_database)
@@ -37,12 +68,15 @@ print("Latest: ",latest)
 
 # read base config
 cmd = f"mpremote {_port} sleep .5 run mpyGetConfig.py > {_cfg_file}"
-if os.system(cmd) != 0:
-    print("Read failed")
-    # Close connection
-    dbm.close()
-    sys.exit()
 
+try:
+    tc = TypeConfig(_cfg_file) # default config
+    cfg = tc.setTypeConfigs(_type)
+    json.dump(cfg, open(_cfg_file, "w"))
+except:
+    print("Failed to udate config file")
+    sys.exit()    
+    
 dbm.insert_config(_cfg_file)
 newest = dbm.get_latest_id()
 print("Newest: ",newest)

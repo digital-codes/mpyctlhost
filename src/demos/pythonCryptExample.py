@@ -3,6 +3,7 @@ import random
 import secrets
 import os
 import base64
+from Cryptodome.Util.Padding import pad, unpad
 
 # device is
 devNum = 123
@@ -29,6 +30,7 @@ print(qrcode)
 
 
 def pkcs7_padding(data, block_size=16):
+    return pad(data, AES.block_size)
     padding_required = block_size - (len(data) % block_size)
     padding = bytes([padding_required] * padding_required)
     return data + padding
