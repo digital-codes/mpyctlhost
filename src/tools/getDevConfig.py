@@ -1,31 +1,28 @@
-"""update mpyctl device in database"""
+"""create and maintain mpyctl device database"""
 import sqlite3
 from sqlite3 import Error
 import os
+import json
 import sys
-
-import getopt
-from typeConfig import TypeConfig
-
 from devDb import DatabaseManager
 
-# local copy file
-_cfg_file = ".cfg.json"
+import getopt
 
 # Database file
 #db_dir = "/home/kugel/daten/work/database/mpyctl"
 _db_name = 'devices.db'
+_cfg_file = ".cfg.json"
 
-cmdOpts = "hd:p:"
+cmdOpts = "hd:i:"
 _type = None
 _database = _database = os.sep.join([".",_db_name])
-_port = "u0"
+_id = None
 
 def usage() :
-    print("Usage: updateDb.py [-d database] [-p port]")
+    print("Usage: getDevConfig.py [-d database] <-i id> ")
 
 def getOptions():
-    global _database, _port
+    global _database, _id
     try:
         opts, _ = getopt.getopt(sys.argv[1:], cmdOpts, [])
     except getopt.GetoptError as err:
@@ -40,28 +37,34 @@ def getOptions():
             sys.exit()
         elif o == "-d":
             _database = a
-        elif o == "-p":
-            _port = a
+        elif o == "-i":
+            _id = a
         else:
             assert False, "unhandled option"
 
 getOptions() 
 
-
-# Create a database connection
-dbm = DatabaseManager(_database)
-
-# read base config
-cmd = f"mpremote {_port} sleep .5 run mpyGetConfig.py > {_cfg_file}"
-if os.system(cmd) != 0:
-    print("Read failed")
+if _id is None:
+    usage()
     sys.exit()
 
-updated = dbm.update_config(_cfg_file)
-print("Updated: ",updated)
-    
 
-# Close connection
-dbm.close()
+def main():
+    global _database, _id
+    dbm = DatabaseManager(_database)
 
+    item = dbm.get_by_id(_id)
+    if item:
+        item = dict(item[0])
+        item["config"] = json.loads(item["config"])
+        print(json.dumps(item))
+        with open(_cfg_file, "w") as cfg:
+            json.dump(item,cfg)
+    else:    
+        print(f"Item with id {_id} not found")
+    # Close connection
+    dbm.close()
+
+if __name__ == "__main__":
+    main()
 

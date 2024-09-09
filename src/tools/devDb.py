@@ -241,6 +241,32 @@ class DatabaseManager:
         except Error as e:
             print(e)
 
+    def update_by_id(self, id,config):
+        """
+        update device with id from a config object
+
+        Args:
+            config (object): Config object
+
+        Returns:
+            row_id (int): The ID of the updated row.
+        """
+        try:
+            items = self.get_by_id(id)
+            if len(items) == 0:
+                raise BaseException(f"ID {id} doesn't exist")
+            item = items[0]
+            itemId = item["id"]
+            sql = ''' UPDATE devices set config = ?
+                      where id = ? '''
+            cur = self.conn.cursor()
+            cur.execute(sql, (json.dumps(config), itemId))
+            self.conn.commit()
+            return itemId
+        except Error as e:
+            raise BaseException(f"Update failed: {e}")
+
+
     def close(self):
         """
         Close the database connection.

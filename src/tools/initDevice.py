@@ -23,7 +23,7 @@ _database = _database = os.sep.join([".",_db_name])
 _port = "u0"
 
 def usage() :
-    print("Usage: initDevice.py <database> <port>")
+    print("Usage: initDevice.py [-d database] [-p port] <-t type>")
 
 def getOptions():
     global _database, _port, _type
@@ -57,7 +57,7 @@ print(
     )
 
 if _type is None:
-    print("No type specified")
+    usage()
     sys.exit()
 
 # Create a database connection
