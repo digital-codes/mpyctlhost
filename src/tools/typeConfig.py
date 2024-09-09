@@ -81,6 +81,7 @@ class TypeConfig:
     ]
     ioSettings = {
         # lcd is type, like "s3atom"
+        # grove: first pin out, second pin is next to vcc
         "AtomMx": {
                 "led": 27,
                 "btn": 39,
@@ -130,8 +131,8 @@ class TypeConfig:
             "led": 35,
             "btn": 41,
             "grove": [
-                2,
-                1
+                1,
+                2
             ],
             "lcd": None,
             "i2c": None,
@@ -143,7 +144,7 @@ class TypeConfig:
             "btn": 39,
             "lcd": None,
             "i2c": None,
-            "grove": [32,33],
+            "grove": [33,32],
             "pin": None,
             "imu":None
         },
