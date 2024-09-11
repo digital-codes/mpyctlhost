@@ -60,15 +60,12 @@ if _type is None:
     usage()
     sys.exit()
 
-# Create a database connection
-dbm = DatabaseManager(_database)
-
-latest = dbm.get_latest_id()
-print("Latest: ",latest)
-
 # read base config
 cmd = f"mpremote {_port} sleep .5 run mpyGetConfig.py > {_cfg_file}"
-
+if os.system(cmd) != 0:
+    print("Read failed")
+    sys.exit()
+    
 try:
     tc = TypeConfig(_cfg_file) # default config
     cfg = tc.setTypeConfigs(_type)
@@ -76,6 +73,22 @@ try:
 except:
     print("Failed to udate config file")
     sys.exit()    
+
+# Create a database connection
+dbm = DatabaseManager(_database)
+
+# check if the device exists already
+addr = cfg["ble"]["addr"].lower().lower()
+item = dbm.get_by_address(addr)
+if len(item) > 0:
+    print(f"Device exists already {item[0]["name"]}")
+    # Close connection
+    dbm.close()
+    sys.exit()
+
+latest = dbm.get_latest_id()
+print("Latest: ",latest)
+
     
 dbm.insert_config(_cfg_file)
 newest = dbm.get_latest_id()

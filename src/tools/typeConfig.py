@@ -94,7 +94,7 @@ class TypeConfig:
                     26
                 ],
             "lcd": None,
-            "pin": None,
+            "pin": [22,19,23,33],
             "imu": "mpu6886"
         },
         "AtomLite": {
@@ -109,7 +109,7 @@ class TypeConfig:
                     26
                 ],
             "lcd": None,
-            "pin": None,
+            "pin": [22,19,23,33],
             "imu":None
         },
         "AtomS3": {
@@ -124,7 +124,7 @@ class TypeConfig:
             "btn": 41,
             "lcd": "s3atom",
             "led": None,
-            "pin": None,
+            "pin": [5,6,7,8],
             "imu":"mpu6886"
         },
         "AtomS3U": {
