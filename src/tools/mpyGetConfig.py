@@ -5,30 +5,44 @@ update config if mac mismatch
 import json
 import machine
 import os
-import network
-import bluetooth
+import sys
+
+if "samd" not in sys.platform:
+    import network
+    import bluetooth
+    hasnet = True
+else:
+    hasnet = False
 
 _CONF_FILE = "config.json"
 
 class Config:
     def __init__(self, data=None):
         self.dirty = True # true if the config has been modified
-        b = bluetooth.BLE()
-        b.active(1)
-        bmac = b.config("mac")[1].hex()
-        w = network.WLAN()
-        # allways set os
-        o = os.uname()
-        self.os = {"release": o.release, "machine": o.machine}
+        if hasnet:
+            b = bluetooth.BLE()
+            b.active(1)
+            bmac = b.config("mac")[1].hex()
+            w = network.WLAN()
+            wlan = w.config("mac").hex()
+            # allways set os
+            o = os.uname()
+            self.os = {"release": o.release, "machine": o.machine}
+        else:
+            bmac = machine.unique_id().hex()
+            wlan = machine.unique_id().hex()
+            v = sys.implementation.version
+            m = sys.implementation._machine
+            self.os = {"release": ".".join([str(x) for x in v]), "machine": m}
+            
         if data == None:    
             self.io = {}  # no default io definition
             self.device = -1  # no default device
             self.model = ""  # no default model
             self.setting = -1  # no default settings
             self.id = machine.unique_id().hex()
-            bmac = b.config("mac")[1].hex()
             self.ble = {"key": "", "pin":0, "addr": bmac}
-            self.wlan = {"addr": w.config("mac").hex()}
+            self.wlan = {"addr": wlan}
         elif isinstance(data, dict):
             self.io = data.get('io')
             self.device = data.get('device')
@@ -42,7 +56,7 @@ class Config:
             else:
                 self.id = machine.unique_id().hex()
                 self.ble = {"key": "", "pin":0, "addr": bmac}
-                self.wlan = {"addr": w.config("mac").hex()}
+                self.wlan = wlan
                 self.setting = -1
         else:
             raise ValueError("Invalid data type")

@@ -77,13 +77,14 @@ class TypeConfig:
     knownTypes = [
         "AtomMx", "AtomLite", "AtomS3", "AtomS3U",
         "StampPico", "StampS3", "StampC3", "StampC3U",
-        "Gray"
+        "Gray","XiaoC3", "XiaoSamd21"
     ]
     ioSettings = {
         # lcd is type, like "s3atom"
         # grove: first pin out, second pin is next to vcc
         "AtomMx": {
                 "led": 27,
+                "ledcolor": "rgb",
                 "btn": 39,
                 "i2c": {
                     "scl": 25,
@@ -99,6 +100,7 @@ class TypeConfig:
         },
         "AtomLite": {
                 "led": 27,
+                "ledcolor": "rgb",
                 "btn": 39,
                 "i2c": {
                     "scl": 25,
@@ -129,6 +131,7 @@ class TypeConfig:
         },
         "AtomS3U": {
             "led": 35,
+            "ledcolor": "rgb",
             "btn": 41,
             "grove": [
                 1,
@@ -141,6 +144,7 @@ class TypeConfig:
         },
         "StampPico": {
             "led": 27,
+            "ledcolor": "rgb",
             "btn": 39,
             "lcd": None,
             "i2c": None,
@@ -150,6 +154,7 @@ class TypeConfig:
         },
         "StampS3": {
             "led": 21,
+            "ledcolor": "rgb",
             "btn": 0,
             "lcd": None,
             "i2c": None,
@@ -159,6 +164,7 @@ class TypeConfig:
         },
         "StampC3": {
             "led": 2,
+            "ledcolor": "rgb",
             "btn": 3,
             "lcd": None,
             "i2c": None,
@@ -168,6 +174,7 @@ class TypeConfig:
         },
         "StampC3U": {
             "led": 2,
+            "ledcolor": "rgb",
             "btn": 9,
             "lcd": None,
             "i2c": None,
@@ -182,6 +189,30 @@ class TypeConfig:
             "i2c": None,
             "grove": None,
             "pin": None,
+            "imu":None
+        },
+        "XiaoC3": {
+            "led": None,
+            "btn": None,
+            "lcd": None,
+            "i2c": [7,6],
+            "grove": [21,20],
+            "pin": [3,2,5,4,8,9,10], 
+            "imu":None
+        },
+        # samd21 pins must be mapped to the correct pins
+        # i2c: xiaopins 4,5 => mpy pins 8 (sda),9 (scl)
+        # uart: xiaopins 6,7 => mpy pins 40,41
+        # arduino uses xiao naming!
+        "XiaoSamd21": {
+            "led": 18,
+            "ledcolor": "blue",
+            "btn": None,
+            "lcd": None,
+            "i2c": [9,8],
+            "grove": [40,41],
+            "uart":4, # samd21 needs proper uart number
+            "pin": [4,2,11,10,7,5,6],  
             "imu":None
         },
     }
