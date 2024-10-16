@@ -19,7 +19,7 @@ _cfg_file = ".cfg.json"
 
 cmdOpts = "hd:p:t:"
 _type = None
-_database = _database = os.sep.join([".",_db_name])
+_database = os.sep.join([".",_db_name])
 _port = "u0"
 
 def usage() :

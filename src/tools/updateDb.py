@@ -18,7 +18,7 @@ _db_name = 'devices.db'
 
 cmdOpts = "hd:p:"
 _type = None
-_database = _database = os.sep.join([".",_db_name])
+_database = os.sep.join([".",_db_name])
 _port = "u0"
 
 def usage() :

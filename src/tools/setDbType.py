@@ -19,7 +19,7 @@ _db_name = 'devices.db'
 
 cmdOpts = "hd:i:t:"
 _type = None
-_database = _database = os.sep.join([".",_db_name])
+_database = os.sep.join([".",_db_name])
 _id = None
 _type = None
 
